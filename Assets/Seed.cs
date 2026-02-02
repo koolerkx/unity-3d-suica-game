@@ -8,6 +8,10 @@ public class Seed : MonoBehaviour
     public int seedNo;
     public float spawnDelay = 0.2f;
     private bool isFirstTouch = true;
+    public int score = 10;
+    private bool isScored = false;
+
+    public void SetIsScored() => isScored = true;
 
     void Awake()
     {
@@ -53,6 +57,7 @@ public class Seed : MonoBehaviour
         if (colobj.CompareTag("Seed"))
         {
             Seed colseed = colobj.GetComponent<Seed>();
+            if (colseed == null) return;
             colseed.SetIsFirstTouch(false);
 
             if (seedNo == colseed.seedNo && !isMergeFlag && !colseed.isMergeFlag && seedNo < GameManager.Instance.MaxSeedNo - 1)
@@ -63,12 +68,21 @@ public class Seed : MonoBehaviour
                 {
                     Vector3 spawnPos = Vector3.Lerp(transform.position, colseed.transform.position, 0.5f);
 
-                    GameManager.Instance.MergeNext(spawnPos, seedNo);
-                    Destroy(gameObject);
-                    Destroy(colseed.gameObject);
+                    GameManager.Instance.MergeNext(spawnPos, seedNo, new GameObject[] { gameObject, colseed.gameObject });
+                    // Destroy(gameObject);
+                    // Destroy(colseed.gameObject);
                 }, spawnDelay);
-
             }
+        }
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        bool isBoxOrSeed = other.CompareTag("Scoreable") || other.CompareTag("Seed");
+        if (isBoxOrSeed && !isScored)
+        {
+            GameManager.Instance.AddScore(score);
+            isScored = true;
         }
     }
 }
