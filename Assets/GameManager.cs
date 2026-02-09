@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -22,6 +23,11 @@ public class GameManager : MonoBehaviour
     [SerializeField] private TMP_Text lifeText;
     [SerializeField] private Image powerImage;
 
+    [Header("End Game Panel")]
+    [SerializeField] private GameObject endGamePanel;
+    [SerializeField] private TMP_Text panelTimeText;
+    [SerializeField] private TMP_Text panelScoreText;
+
     [Header("Power Indicator")]
     [SerializeField] private float powerImageMaxWidth = 200f;
     [SerializeField] private Color powerLowColor = Color.blue;
@@ -41,6 +47,7 @@ public class GameManager : MonoBehaviour
     private Throw currentThrowInstance;
     private float chargeTimer = 0f;
     private bool isHolding = false;
+    private bool gameOver = false;
 
     public void AddScore(int score) => SetScoreText(totalScore += score);
 
@@ -56,6 +63,10 @@ public class GameManager : MonoBehaviour
 
     public void Start()
     {
+        if (endGamePanel != null)
+        {
+            endGamePanel.SetActive(false);
+        }
         CreateSeed();
         SetLifeText(currentLife);
         SetTimerText(accumulatedTime);
@@ -102,6 +113,8 @@ public class GameManager : MonoBehaviour
 
     public void Update()
     {
+        if (gameOver) return;
+
         accumulatedTime += Time.deltaTime;
         SetTimerText(accumulatedTime);
         HandleInput();
@@ -182,6 +195,11 @@ public class GameManager : MonoBehaviour
         if (currentLife <= 0) return;
         currentLife--;
         SetLifeText(currentLife);
+
+        if (currentLife <= 0)
+        {
+            HandleGameOver();
+        }
     }
 
     private void SetLifeText(int life)
@@ -205,5 +223,53 @@ public class GameManager : MonoBehaviour
         RectTransform rect = powerImage.rectTransform;
         rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, powerImageMaxWidth * clamped);
         powerImage.color = Color.Lerp(powerLowColor, powerHighColor, clamped);
+    }
+
+    private void HandleGameOver()
+    {
+        if (gameOver) return;
+        gameOver = true;
+
+        if (endGamePanel != null)
+        {
+            endGamePanel.SetActive(true);
+        }
+
+        if (panelTimeText != null)
+        {
+            int minutes = Mathf.FloorToInt((float)(accumulatedTime / 60.0));
+            int seconds = Mathf.FloorToInt((float)(accumulatedTime % 60.0));
+            panelTimeText.text = $"{minutes:00}:{seconds:00}";
+        }
+
+        if (panelScoreText != null)
+        {
+            panelScoreText.text = totalScore.ToString("D4");
+        }
+
+        if (textScore != null)
+        {
+            textScore.gameObject.SetActive(false);
+        }
+
+        if (timerText != null)
+        {
+            timerText.gameObject.SetActive(false);
+        }
+
+        if (lifeText != null)
+        {
+            lifeText.gameObject.SetActive(false);
+        }
+    }
+
+    public void Restart()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    public void BackToTitle()
+    {
+        SceneManager.LoadScene("Title");
     }
 }
