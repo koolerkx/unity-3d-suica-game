@@ -11,6 +11,7 @@ public class Seed : MonoBehaviour
     public bool isActiveSeed = false;
     public int score = 10;
     private bool isScored = false;
+    private bool hasLostLife = false;
 
     public void SetIsScored() => isScored = true;
 
@@ -59,7 +60,11 @@ public class Seed : MonoBehaviour
         GameObject colobj = collision.gameObject;
         if (colobj.CompareTag("Ground"))
         {
-            GameManager.Instance.LoseLife();
+            if (!hasLostLife)
+            {
+                GameManager.Instance.LoseLife();
+                hasLostLife = true;
+            }
         }
         if (isActiveSeed && isFirstTouch)
         {
