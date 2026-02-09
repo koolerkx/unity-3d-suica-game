@@ -159,7 +159,7 @@ MonoBehaviour:
   m_RendererIndex: -1
   m_VolumeLayerMask:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 0
   m_VolumeTrigger: {fileID: 0}
   m_VolumeFrameworkUpdateModeOption: 2
   m_RenderPostProcessing: 1
@@ -224,7 +224,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 60
+  field of view: 90
   orthographic: 0
   orthographic size: 5
   m_Depth: 0
@@ -251,7 +251,7 @@ Transform:
   m_GameObject: {fileID: 4499281}
   serializedVersion: 2
   m_LocalRotation: {x: 0.032804526, y: -0.0010670369, z: -0.0005778606, w: 0.99946105}
-  m_LocalPosition: {x: -0.81645876, y: 7.371928, z: -28.059383}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -438,8 +438,8 @@ Transform:
   m_GameObject: {fileID: 91117151}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 11.98, z: 0}
-  m_LocalScale: {x: 25, y: 1, z: 1}
+  m_LocalPosition: {x: 0, y: 15, z: -10}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -1000,7 +1000,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 405d614183440914ab72326cbe0b44fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  skyboxCamera: {fileID: 4499284}
+  parallaxCameras:
+  - {fileID: 4499284}
+  - {fileID: 1710884414}
   maxYawOffset: 10
   maxPitchOffset: 5
   followSmoothTime: 0.08
@@ -1010,16 +1012,18 @@ MonoBehaviour:
   - {fileID: 6206763992233177524, guid: 2b6141f2fcac2574fb5a598ec018dd5e, type: 3}
   - {fileID: 1631504496769792678, guid: 8b87c32acda17f3499cd4091b61110e8, type: 3}
   - {fileID: 7316785383916735121, guid: 0a6eb3005e9958f49accb511df56449a, type: 3}
-  xSpread: 12.5
-  spawnRate: 0.2
-  spawnRateNoise: 0.05
+  xSpread: 25
+  spawnRate: 0.05
+  spawnRateNoise: 0.025
   spawnPoint: {fileID: 91117155}
-  initialDownForce: 1
-  lateralForce: 0.3
-  torqueStrength: 0.5
-  effectAudioSource: {fileID: 0}
+  throwDirection: {x: 0, y: 0.5, z: 1}
+  throwPowerMin: 10
+  throwPowerMax: 40
+  directionVarianceDegrees: 45
+  torqueStrength: 1
+  effectAudioSource: {fileID: 651416691}
   bgmAudioSource: {fileID: 651416690}
-  clickClip: {fileID: 0}
+  clickClip: {fileID: 8300000, guid: 6b1e2158e323ff249b67f701399ba35f, type: 3}
   overlayImage: {fileID: 56894511}
   introFadeDuration: 0.5
   bgmFadeOutDuration: 0.5
@@ -1280,7 +1284,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 725963315}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -1339,8 +1343,8 @@ Transform:
   m_GameObject: {fileID: 725963315}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -6.53, z: 0}
-  m_LocalScale: {x: 329.55002, y: 1, z: 4.0406528}
+  m_LocalPosition: {x: 0, y: -323, z: 0}
+  m_LocalScale: {x: 1000, y: 1, z: 1075.9565}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -1814,7 +1818,7 @@ Camera:
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 1
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0

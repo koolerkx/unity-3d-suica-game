@@ -7,7 +7,7 @@ using UnityEngine.UI;
 public class TitleManager : MonoBehaviour
 {
     [Header("Skybox Camera Parallax")]
-    [SerializeField] private Camera skyboxCamera;
+    [SerializeField] private Camera[] parallaxCameras;
     [SerializeField] private float maxYawOffset = 15f;
     [SerializeField] private float maxPitchOffset = 15f;
     [SerializeField] private float followSmoothTime = 0.08f;
@@ -20,8 +20,10 @@ public class TitleManager : MonoBehaviour
     [SerializeField] private Transform spawnPoint;
 
     [Header("Spawn Force")]
-    [SerializeField] private float initialDownForce = 0.5f;
-    [SerializeField] private float lateralForce = 0.3f;
+    [SerializeField] private Vector3 throwDirection = Vector3.down;
+    [SerializeField] private float throwPowerMin = 0.4f;
+    [SerializeField] private float throwPowerMax = 0.8f;
+    [SerializeField] private float directionVarianceDegrees = 10f;
     [SerializeField] private float torqueStrength = 0.3f;
 
     [Header("UI Audio")]
@@ -37,7 +39,7 @@ public class TitleManager : MonoBehaviour
     [SerializeField] private float bgmFadeOutDuration = 0.5f;
 
     private float spawnTimer = 0f;
-    private Vector3 baseSkyboxEuler;
+    private Vector3[] baseCameraEulers;
     private float currentYawOffset = 0f;
     private float currentPitchOffset = 0f;
     private float yawVelocity = 0f;
@@ -120,10 +122,18 @@ public class TitleManager : MonoBehaviour
         Rigidbody rb = spawned.GetComponent<Rigidbody>();
         if (rb != null)
         {
-            Vector3 force = Vector3.down * initialDownForce;
-            force.x += Random.Range(-lateralForce, lateralForce);
-            force.z += Random.Range(-lateralForce, lateralForce);
-            rb.AddForce(force, ForceMode.Impulse);
+            Vector3 baseDirection = throwDirection.sqrMagnitude > 0.0001f ? throwDirection.normalized : Vector3.down;
+            float minPower = Mathf.Min(throwPowerMin, throwPowerMax);
+            float maxPower = Mathf.Max(throwPowerMin, throwPowerMax);
+            float power = Random.Range(minPower, maxPower);
+
+            Vector3 randomAxis = Random.onUnitSphere;
+            float variance = Mathf.Max(0f, directionVarianceDegrees);
+            Vector3 finalDirection = variance > 0f
+                ? Quaternion.AngleAxis(Random.Range(-variance, variance), randomAxis) * baseDirection
+                : baseDirection;
+
+            rb.AddForce(finalDirection * power, ForceMode.Impulse);
 
             Vector3 torque = new Vector3(
                 Random.Range(-torqueStrength, torqueStrength),
@@ -142,13 +152,19 @@ public class TitleManager : MonoBehaviour
 
     private void CacheSkyboxCameraBaseRotation()
     {
-        if (skyboxCamera == null) return;
-        baseSkyboxEuler = skyboxCamera.transform.localEulerAngles;
+        if (parallaxCameras == null || parallaxCameras.Length == 0) return;
+
+        baseCameraEulers = new Vector3[parallaxCameras.Length];
+        for (int i = 0; i < parallaxCameras.Length; i++)
+        {
+            Camera cam = parallaxCameras[i];
+            baseCameraEulers[i] = cam != null ? cam.transform.localEulerAngles : Vector3.zero;
+        }
     }
 
     private void UpdateSkyboxCameraParallax()
     {
-        if (skyboxCamera == null) return;
+        if (parallaxCameras == null || parallaxCameras.Length == 0) return;
 
         if (Screen.width <= 0 || Screen.height <= 0) return;
 
@@ -161,11 +177,26 @@ public class TitleManager : MonoBehaviour
         currentYawOffset = Mathf.SmoothDampAngle(currentYawOffset, targetYaw, ref yawVelocity, followSmoothTime);
         currentPitchOffset = Mathf.SmoothDampAngle(currentPitchOffset, targetPitch, ref pitchVelocity, followSmoothTime);
 
-        skyboxCamera.transform.localRotation = Quaternion.Euler(
-            baseSkyboxEuler.x + currentPitchOffset,
-            baseSkyboxEuler.y + currentYawOffset,
-            baseSkyboxEuler.z
-        );
+        if (baseCameraEulers == null || baseCameraEulers.Length != parallaxCameras.Length)
+        {
+            CacheSkyboxCameraBaseRotation();
+        }
+
+        for (int i = 0; i < parallaxCameras.Length; i++)
+        {
+            Camera cam = parallaxCameras[i];
+            if (cam == null) continue;
+
+            Vector3 baseEuler = baseCameraEulers != null && i < baseCameraEulers.Length
+                ? baseCameraEulers[i]
+                : cam.transform.localEulerAngles;
+
+            cam.transform.localRotation = Quaternion.Euler(
+                baseEuler.x + currentPitchOffset,
+                baseEuler.y + currentYawOffset,
+                baseEuler.z
+            );
+        }
     }
 
     private void StartOverlayFadeOut()
