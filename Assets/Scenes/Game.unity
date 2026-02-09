@@ -847,6 +847,7 @@ MonoBehaviour:
   powerImageMaxWidth: 1024
   powerLowColor: {r: 0, g: 0, b: 1, a: 1}
   powerHighColor: {r: 1, g: 0, b: 0, a: 1}
+  vfxPrefab: {fileID: 104829970813648393, guid: d3015b7eea383f64d8b81f965cc466e7, type: 3}
   chargeSpeed: 2
   powerLowerBound: 1
   powerUpperBound: 5

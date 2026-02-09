@@ -33,6 +33,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Color powerLowColor = Color.blue;
     [SerializeField] private Color powerHighColor = Color.red;
 
+    [Header("Merge VFX")]
+    [SerializeField] private GameObject vfxPrefab;
+
     [Header("Throw Settings")]
     [SerializeField] private float chargeSpeed = 5.0f;
     [SerializeField] private float powerLowerBound = 1.0f;
@@ -152,6 +155,7 @@ public class GameManager : MonoBehaviour
     public void MergeNext(Vector3 target, int seedNo, Vector3 avgLinear, Vector3 avgAngular, GameObject[] toDestory)
     {
         if (seedPrefab == null || seedNo + 1 >= seedPrefab.Length) return;
+        PlayEffectAt(target, Quaternion.identity);
         Seed seedIns = Instantiate(seedPrefab[seedNo + 1], target, Quaternion.identity);
         seedIns.seedNo = seedNo + 1;
         seedIns.SetIsScored();
@@ -183,6 +187,22 @@ public class GameManager : MonoBehaviour
 
         totalScore += seedIns.score;
         SetScoreText(totalScore);
+    }
+
+    public void PlayEffectAt(Vector3 position, Quaternion rotation)
+    {
+        if (vfxPrefab == null) return;
+        GameObject effect = Instantiate(vfxPrefab, position, rotation);
+
+        ParticleSystem ps = effect.GetComponent<ParticleSystem>();
+        if (ps == null)
+        {
+            Destroy(effect, 2f);
+            return;
+        }
+
+        float duration = ps.main.duration + ps.main.startLifetime.constant;
+        Destroy(effect, duration);
     }
 
     private void SetScoreText(int score)
