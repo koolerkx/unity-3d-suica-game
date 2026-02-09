@@ -4,6 +4,12 @@ using UnityEngine.SceneManagement;
 
 public class TitleManager : MonoBehaviour
 {
+    [Header("Skybox Camera Parallax")]
+    [SerializeField] private Camera skyboxCamera;
+    [SerializeField] private float maxYawOffset = 15f;
+    [SerializeField] private float maxPitchOffset = 15f;
+    [SerializeField] private float followSmoothTime = 0.08f;
+
     [Header("Random Spawn")]
     [SerializeField] private GameObject[] spawnObjects;
     [SerializeField] private float xSpread = 1.0f;
@@ -17,14 +23,21 @@ public class TitleManager : MonoBehaviour
     [SerializeField] private float torqueStrength = 0.3f;
 
     private float spawnTimer = 0f;
+    private Vector3 baseSkyboxEuler;
+    private float currentYawOffset = 0f;
+    private float currentPitchOffset = 0f;
+    private float yawVelocity = 0f;
+    private float pitchVelocity = 0f;
 
     void Start()
     {
+        CacheSkyboxCameraBaseRotation();
         ResetSpawnTimer();
     }
 
     void Update()
     {
+        UpdateSkyboxCameraParallax();
         HandleRandomSpawn();
     }
 
@@ -91,5 +104,33 @@ public class TitleManager : MonoBehaviour
     {
         float noise = Random.Range(-spawnRateNoise, spawnRateNoise);
         spawnTimer = Mathf.Max(0.01f, spawnRate + noise);
+    }
+
+    private void CacheSkyboxCameraBaseRotation()
+    {
+        if (skyboxCamera == null) return;
+        baseSkyboxEuler = skyboxCamera.transform.localEulerAngles;
+    }
+
+    private void UpdateSkyboxCameraParallax()
+    {
+        if (skyboxCamera == null) return;
+
+        if (Screen.width <= 0 || Screen.height <= 0) return;
+
+        Vector3 mousePos = Input.mousePosition;
+        float normalizedX = (mousePos.x / Screen.width) * 2f - 1f;
+        float normalizedY = (mousePos.y / Screen.height) * 2f - 1f;
+        float targetYaw = -normalizedX * maxYawOffset;
+        float targetPitch = normalizedY * maxPitchOffset;
+
+        currentYawOffset = Mathf.SmoothDampAngle(currentYawOffset, targetYaw, ref yawVelocity, followSmoothTime);
+        currentPitchOffset = Mathf.SmoothDampAngle(currentPitchOffset, targetPitch, ref pitchVelocity, followSmoothTime);
+
+        skyboxCamera.transform.localRotation = Quaternion.Euler(
+            baseSkyboxEuler.x + currentPitchOffset,
+            baseSkyboxEuler.y + currentYawOffset,
+            baseSkyboxEuler.z
+        );
     }
 }
