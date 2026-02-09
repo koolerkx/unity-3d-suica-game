@@ -76,13 +76,24 @@ public class Seed : MonoBehaviour
 
             if (seedNo == colseed.seedNo && !isMergeFlag && !colseed.isMergeFlag && seedNo < GameManager.Instance.MaxSeedNo - 1)
             {
+                Rigidbody rbA = _rb;
+                Rigidbody rbB = colseed._rb;
+                Vector3 avgLinear = Vector3.zero;
+                Vector3 avgAngular = Vector3.zero;
+
+                if (rbA != null && rbB != null)
+                {
+                    avgLinear = (rbA.linearVelocity + rbB.linearVelocity) * 0.5f;
+                    avgAngular = (rbA.angularVelocity + rbB.angularVelocity) * 0.5f;
+                }
+
                 this.SetMergeState();
                 colseed.SetMergeState();
                 Timer.SetTimeout(() =>
                 {
                     Vector3 spawnPos = Vector3.Lerp(transform.position, colseed.transform.position, 0.5f);
 
-                    GameManager.Instance.MergeNext(spawnPos, seedNo, new GameObject[] { gameObject, colseed.gameObject });
+                    GameManager.Instance.MergeNext(spawnPos, seedNo, avgLinear, avgAngular, new GameObject[] { gameObject, colseed.gameObject });
                     // Destroy(gameObject);
                     // Destroy(colseed.gameObject);
                 }, spawnDelay);

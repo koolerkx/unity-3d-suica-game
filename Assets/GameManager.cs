@@ -136,7 +136,7 @@ public class GameManager : MonoBehaviour
         Invoke(nameof(CreateSeed), spawnDelay);
     }
 
-    public void MergeNext(Vector3 target, int seedNo, GameObject[] toDestory)
+    public void MergeNext(Vector3 target, int seedNo, Vector3 avgLinear, Vector3 avgAngular, GameObject[] toDestory)
     {
         if (seedPrefab == null || seedNo + 1 >= seedPrefab.Length) return;
         Seed seedIns = Instantiate(seedPrefab[seedNo + 1], target, Quaternion.identity);
@@ -156,14 +156,10 @@ public class GameManager : MonoBehaviour
             seedRb.isKinematic = false;
         }
 
-        if (toDestory.Length > 1 && toDestory[1] != null)
+        if (seedRb != null)
         {
-            Rigidbody otherRb = toDestory[1].GetComponent<Rigidbody>();
-            if (otherRb != null && seedRb != null)
-            {
-                seedRb.linearVelocity = otherRb.linearVelocity;
-                seedRb.angularVelocity = otherRb.angularVelocity;
-            }
+            seedRb.linearVelocity = avgLinear;
+            seedRb.angularVelocity = avgAngular;
         }
         for (int i = 0; i < toDestory.Length; i++)
         {
