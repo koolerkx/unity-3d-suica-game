@@ -13,6 +13,11 @@ public class Seed : MonoBehaviour
     private bool isScored = false;
     private bool hasLostLife = false;
 
+    [Header("Audio")]
+    [SerializeField] private AudioSource collisionAudioSource;
+    [SerializeField] private AudioClip collisionClip;
+    private bool hasPlayedSeedCollision = false;
+
     public void SetIsScored() => isScored = true;
 
     void Awake()
@@ -58,6 +63,18 @@ public class Seed : MonoBehaviour
     private void OnCollisionEnter(Collision collision)
     {
         GameObject colobj = collision.gameObject;
+        if (collisionClip != null && collisionAudioSource != null)
+        {
+            if (!colobj.CompareTag("Seed"))
+            {
+                collisionAudioSource.PlayOneShot(collisionClip);
+            }
+            else if (!hasPlayedSeedCollision)
+            {
+                collisionAudioSource.PlayOneShot(collisionClip);
+                hasPlayedSeedCollision = true;
+            }
+        }
         if (colobj.CompareTag("Ground"))
         {
             if (!hasLostLife)

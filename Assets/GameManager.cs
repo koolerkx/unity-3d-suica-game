@@ -1,3 +1,4 @@
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -22,6 +23,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private TMP_Text timerText;
     [SerializeField] private TMP_Text lifeText;
     [SerializeField] private Image powerImage;
+    [SerializeField] private Image overlayImage;
+    [SerializeField] private TMP_Text pingpongAlphaText;
 
     [Header("End Game Panel")]
     [SerializeField] private GameObject endGamePanel;
@@ -41,6 +44,16 @@ public class GameManager : MonoBehaviour
     [SerializeField] private float powerLowerBound = 1.0f;
     [SerializeField] private float powerUpperBound = 5.0f;
 
+    [Header("Audio")]
+    [SerializeField] private AudioSource effectAudioSource;
+    [SerializeField] private AudioSource bgmAudioSource;
+    [SerializeField] private AudioClip clickClip;
+    [SerializeField] private AudioClip mergeClip;
+    [SerializeField] private AudioClip throwClip;
+    [SerializeField] private AudioClip gameOverClip;
+    [SerializeField] private float bgmFadeInDuration = 0.5f;
+    [SerializeField] private float sceneFadeDuration = 0.5f;
+
     private bool isNext;
     private int totalScore;
     private int currentLife = 5;
@@ -51,6 +64,11 @@ public class GameManager : MonoBehaviour
     private float chargeTimer = 0f;
     private bool isHolding = false;
     private bool gameOver = false;
+    private Coroutine bgmFadeCoroutine;
+    private float bgmTargetVolume;
+    private Coroutine overlayFadeCoroutine;
+    private Coroutine pingpongTextCoroutine;
+    private Coroutine sceneTransitionCoroutine;
 
     public void AddScore(int score) => SetScoreText(totalScore += score);
 
@@ -73,6 +91,9 @@ public class GameManager : MonoBehaviour
         CreateSeed();
         SetLifeText(currentLife);
         SetTimerText(accumulatedTime);
+        StartBgmFadeIn();
+        StartOverlayFadeOut();
+        StartPingpongText();
     }
 
     private void HandleInput()
@@ -107,6 +128,7 @@ public class GameManager : MonoBehaviour
         {
             Debug.Log($"Throw Power: {currentPower:F2}");
             isCharging = false;
+            PlayThrowSound();
             currentThrowInstance.StartThrow(currentPower);
             currentThrowInstance = null;
             isHolding = false;
@@ -155,6 +177,7 @@ public class GameManager : MonoBehaviour
     public void MergeNext(Vector3 target, int seedNo, Vector3 avgLinear, Vector3 avgAngular, GameObject[] toDestory)
     {
         if (seedPrefab == null || seedNo + 1 >= seedPrefab.Length) return;
+        PlayMergeSound();
         PlayEffectAt(target, Quaternion.identity);
         Seed seedIns = Instantiate(seedPrefab[seedNo + 1], target, Quaternion.identity);
         seedIns.seedNo = seedNo + 1;
@@ -249,6 +272,7 @@ public class GameManager : MonoBehaviour
     {
         if (gameOver) return;
         gameOver = true;
+        PlayGameOverSound();
 
         if (endGamePanel != null)
         {
@@ -285,11 +309,237 @@ public class GameManager : MonoBehaviour
 
     public void Restart()
     {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        StartSceneTransition(SceneManager.GetActiveScene().name);
     }
 
     public void BackToTitle()
     {
-        SceneManager.LoadScene("Title");
+        StartSceneTransition("Title");
+    }
+
+    public void RestartWithFade()
+    {
+        StartSceneTransition(SceneManager.GetActiveScene().name);
+    }
+
+    public void BackToTitleWithFade()
+    {
+        StartSceneTransition("Title");
+    }
+
+    public void PlayClickSound()
+    {
+        if (effectAudioSource != null && clickClip != null)
+        {
+            effectAudioSource.PlayOneShot(clickClip);
+        }
+    }
+
+    private void PlayMergeSound()
+    {
+        if (effectAudioSource != null && mergeClip != null)
+        {
+            effectAudioSource.PlayOneShot(mergeClip);
+        }
+    }
+
+    private void PlayThrowSound()
+    {
+        if (effectAudioSource != null && throwClip != null)
+        {
+            effectAudioSource.PlayOneShot(throwClip);
+        }
+    }
+
+    private void PlayGameOverSound()
+    {
+        if (effectAudioSource != null && gameOverClip != null)
+        {
+            effectAudioSource.PlayOneShot(gameOverClip);
+        }
+    }
+
+    private void StartBgmFadeIn()
+    {
+        if (bgmAudioSource == null) return;
+
+        if (bgmFadeCoroutine != null)
+        {
+            StopCoroutine(bgmFadeCoroutine);
+        }
+
+        bgmTargetVolume = bgmAudioSource.volume;
+        bgmAudioSource.volume = 0f;
+        if (!bgmAudioSource.isPlaying)
+        {
+            bgmAudioSource.Play();
+        }
+
+        bgmFadeCoroutine = StartCoroutine(FadeBgmVolume(0f, bgmTargetVolume, bgmFadeInDuration));
+    }
+
+    private void StartOverlayFadeOut()
+    {
+        if (overlayImage == null) return;
+
+        overlayImage.gameObject.SetActive(true);
+        overlayImage.enabled = true;
+        Color startColor = overlayImage.color;
+        startColor.a = 1f;
+        overlayImage.color = startColor;
+
+        if (overlayFadeCoroutine != null)
+        {
+            StopCoroutine(overlayFadeCoroutine);
+        }
+
+        overlayFadeCoroutine = StartCoroutine(FadeOverlayAlpha(1f, 0f, bgmFadeInDuration, true));
+    }
+
+    private IEnumerator FadeOverlayAlpha(float fromAlpha, float toAlpha, float duration, bool disableAfter)
+    {
+        if (overlayImage == null) yield break;
+
+        if (duration <= 0f)
+        {
+            Color instant = overlayImage.color;
+            instant.a = toAlpha;
+            overlayImage.color = instant;
+            if (disableAfter)
+            {
+                overlayImage.gameObject.SetActive(false);
+            }
+            yield break;
+        }
+
+        float elapsed = 0f;
+        Color color = overlayImage.color;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            color.a = Mathf.Lerp(fromAlpha, toAlpha, t);
+            overlayImage.color = color;
+            yield return null;
+        }
+
+        if (disableAfter)
+        {
+            overlayImage.gameObject.SetActive(false);
+        }
+    }
+
+    private void StartSceneTransition(string sceneName)
+    {
+        if (sceneTransitionCoroutine != null)
+        {
+            StopCoroutine(sceneTransitionCoroutine);
+        }
+
+        sceneTransitionCoroutine = StartCoroutine(SceneTransitionRoutine(sceneName));
+    }
+
+    private IEnumerator SceneTransitionRoutine(string sceneName)
+    {
+        if (overlayImage != null)
+        {
+            overlayImage.gameObject.SetActive(true);
+            overlayImage.enabled = true;
+        }
+
+        float startAlpha = overlayImage != null ? overlayImage.color.a : 0f;
+        Coroutine fadeOverlay = null;
+        if (overlayImage != null)
+        {
+            fadeOverlay = StartCoroutine(FadeOverlayAlpha(startAlpha, 1f, sceneFadeDuration, false));
+        }
+
+        Coroutine fadeBgm = null;
+        if (bgmAudioSource != null)
+        {
+            if (bgmFadeCoroutine != null)
+            {
+                StopCoroutine(bgmFadeCoroutine);
+            }
+            fadeBgm = StartCoroutine(FadeBgmVolume(bgmAudioSource.volume, 0f, sceneFadeDuration));
+        }
+
+        if (fadeOverlay != null)
+        {
+            yield return fadeOverlay;
+        }
+        if (fadeBgm != null)
+        {
+            yield return fadeBgm;
+        }
+
+        SceneManager.LoadScene(sceneName);
+    }
+
+    private void StartPingpongText()
+    {
+        if (pingpongAlphaText == null) return;
+
+        if (pingpongTextCoroutine != null)
+        {
+            StopCoroutine(pingpongTextCoroutine);
+        }
+
+        pingpongAlphaText.gameObject.SetActive(true);
+        pingpongTextCoroutine = StartCoroutine(PingpongTextAlpha(bgmFadeInDuration));
+    }
+
+    private IEnumerator PingpongTextAlpha(float duration)
+    {
+        if (pingpongAlphaText == null) yield break;
+
+        if (duration <= 0f)
+        {
+            pingpongAlphaText.gameObject.SetActive(false);
+            yield break;
+        }
+
+        float elapsed = 0f;
+        Color color = pingpongAlphaText.color;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            color.a = Mathf.Lerp(0f, 1f, t);
+            pingpongAlphaText.color = color;
+            yield return null;
+        }
+
+        elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            color.a = Mathf.Lerp(1f, 0f, t);
+            pingpongAlphaText.color = color;
+            yield return null;
+        }
+
+        pingpongAlphaText.gameObject.SetActive(false);
+    }
+
+    private IEnumerator FadeBgmVolume(float fromVolume, float toVolume, float duration)
+    {
+        if (bgmAudioSource == null) yield break;
+
+        if (duration <= 0f)
+        {
+            bgmAudioSource.volume = toVolume;
+            yield break;
+        }
+
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            bgmAudioSource.volume = Mathf.Lerp(fromVolume, toVolume, t);
+            yield return null;
+        }
     }
 }
