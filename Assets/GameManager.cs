@@ -95,6 +95,7 @@ public class GameManager : MonoBehaviour
 
     private void CreateSeed()
     {
+        Debug.Log("CreateSeed");
         if (isHolding) return;
         if (seedPrefab == null || seedPrefab.Length < 2 || seedPosition == null) return;
         isHolding = true;
@@ -102,6 +103,7 @@ public class GameManager : MonoBehaviour
         Seed seedIns = Instantiate(seedPrefab[i], seedPosition.position, seedPosition.rotation);
         // Seed seedIns = Instantiate(seedPrefab[i], seedPosition);
         seedIns.seedNo = i;
+        seedIns.SetActiveSeed(true);
         seedIns.gameObject.SetActive(true);
         currentThrowInstance = seedIns.GetComponent<Throw>();
     }
@@ -117,6 +119,7 @@ public class GameManager : MonoBehaviour
         Seed seedIns = Instantiate(seedPrefab[seedNo + 1], target, Quaternion.identity);
         seedIns.seedNo = seedNo + 1;
         seedIns.SetIsScored();
+        seedIns.SetActiveSeed(false);
         Throw throwComp = seedIns.GetComponent<Throw>();
         if (throwComp != null)
         {

@@ -7,7 +7,8 @@ public class Seed : MonoBehaviour
     public bool isMergeFlag = false;
     public int seedNo;
     public float spawnDelay = 0.2f;
-    private bool isFirstTouch = true;
+    public bool isFirstTouch = true;
+    public bool isActiveSeed = false;
     public int score = 10;
     private bool isScored = false;
 
@@ -44,12 +45,23 @@ public class Seed : MonoBehaviour
         this.isFirstTouch = isFirstTouch;
     }
 
+    public void SetActiveSeed(bool isActive)
+    {
+        isActiveSeed = isActive;
+        if (isActive)
+        {
+            isFirstTouch = true;
+        }
+    }
+
     private void OnCollisionEnter(Collision collision)
     {
-        if (isFirstTouch)
+        if (isActiveSeed && isFirstTouch)
         {
+            Debug.Log("First Touch: ProceedNext");
             GameManager.Instance.ProceedNext();
             isFirstTouch = false;
+            isActiveSeed = false;
         }
 
         GameObject colobj = collision.gameObject;
@@ -58,7 +70,6 @@ public class Seed : MonoBehaviour
         {
             Seed colseed = colobj.GetComponent<Seed>();
             if (colseed == null) return;
-            colseed.SetIsFirstTouch(false);
 
             if (seedNo == colseed.seedNo && !isMergeFlag && !colseed.isMergeFlag && seedNo < GameManager.Instance.MaxSeedNo - 1)
             {
