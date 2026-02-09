@@ -10,15 +10,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 42e8ffd05fc54364db01accdc94dd410, type: 3}
       propertyPath: m_LocalScale.x
-      value: 2
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 42e8ffd05fc54364db01accdc94dd410, type: 3}
       propertyPath: m_LocalScale.y
-      value: 2
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 42e8ffd05fc54364db01accdc94dd410, type: 3}
       propertyPath: m_LocalScale.z
-      value: 2
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 42e8ffd05fc54364db01accdc94dd410, type: 3}
       propertyPath: m_LocalPosition.x
@@ -161,6 +161,8 @@ MonoBehaviour:
   isMergeFlag: 0
   seedNo: 0
   spawnDelay: 0.1
+  isFirstTouch: 1
+  isActiveSeed: 0
   score: 10
 --- !u!114 &6459953209141402372
 MonoBehaviour:
@@ -175,4 +177,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Throw
   power: 2.5
+  isThrown: 0
   maxShakeAmount: 0.01
