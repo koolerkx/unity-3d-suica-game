@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Seed
   - Scoreable
+  - Ground
   layers:
   - Default
   - TransparentFX

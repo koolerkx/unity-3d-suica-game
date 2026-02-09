@@ -1,39 +1,48 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
-    public bool isNext { get; set; }
+    public int MaxSeedNo => seedPrefab.Length;
+    public float PowerUpperBound => powerUpperBound;
 
-    public float spawnDelay = 1f;
+    [Header("Game State")]
+    [SerializeField] private float spawnDelay = 1f;
+    [SerializeField] private int maxLife = 5;
 
-    public int maxLife = 5;
-    public int currentLife = 5;
-
-    public double accumulatedTime = 0;
-
+    [Header("Seed Spawning")]
     [SerializeField] private Seed[] seedPrefab;
     [SerializeField] private Transform seedPosition;
+
+    [Header("UI")]
     [SerializeField] private TMP_Text textScore;
     [SerializeField] private TMP_Text timerText;
     [SerializeField] private TMP_Text lifeText;
+    [SerializeField] private Image powerImage;
 
+    [Header("Power Indicator")]
+    [SerializeField] private float powerImageMaxWidth = 200f;
+    [SerializeField] private Color powerLowColor = Color.blue;
+    [SerializeField] private Color powerHighColor = Color.red;
+
+    [Header("Throw Settings")]
+    [SerializeField] private float chargeSpeed = 5.0f;
+    [SerializeField] private float powerLowerBound = 1.0f;
+    [SerializeField] private float powerUpperBound = 5.0f;
+
+    private bool isNext;
     private int totalScore;
-    public void AddScore(int score) => SetScoreText(totalScore += score);
-
+    private int currentLife = 5;
+    private double accumulatedTime = 0;
     private float currentPower = 1.0f;
     private bool isCharging = false;
-    public float chargeSpeed = 5.0f;
     private Throw currentThrowInstance;
     private float chargeTimer = 0f;
-
-    public float powerLowerBound = 1.0f;
-    public float powerUpperBound = 5.0f;
-
-    public int MaxSeedNo => seedPrefab.Length;
-
     private bool isHolding = false;
+
+    public void AddScore(int score) => SetScoreText(totalScore += score);
 
     private void Awake()
     {
@@ -62,6 +71,7 @@ public class GameManager : MonoBehaviour
             isCharging = true;
             currentPower = 1.0f;
             chargeTimer = 0f;
+            UpdatePowerIndicator(0f);
         }
 
         if (isCharging && Input.GetMouseButton(0))
@@ -76,6 +86,7 @@ public class GameManager : MonoBehaviour
             currentPower = Mathf.Lerp(powerLowerBound, powerUpperBound, curvePower);
 
             currentThrowInstance.SetShakeIntensity(normalized);
+            UpdatePowerIndicator(normalized);
         }
 
         if (isCharging && Input.GetMouseButtonUp(0))
@@ -85,6 +96,7 @@ public class GameManager : MonoBehaviour
             currentThrowInstance.StartThrow(currentPower);
             currentThrowInstance = null;
             isHolding = false;
+            UpdatePowerIndicator(0f);
         }
     }
 
@@ -188,5 +200,14 @@ public class GameManager : MonoBehaviour
         int minutes = Mathf.FloorToInt((float)(totalSeconds / 60.0));
         int seconds = Mathf.FloorToInt((float)(totalSeconds % 60.0));
         timerText.text = $"TIME\n{minutes:00}:{seconds:00}";
+    }
+
+    private void UpdatePowerIndicator(float normalized)
+    {
+        if (powerImage == null) return;
+        float clamped = Mathf.Clamp01(normalized);
+        RectTransform rect = powerImage.rectTransform;
+        rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, powerImageMaxWidth * clamped);
+        powerImage.color = Color.Lerp(powerLowColor, powerHighColor, clamped);
     }
 }

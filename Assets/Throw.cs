@@ -66,7 +66,7 @@ public class Throw : MonoBehaviour
 
             Vector3 forwardXZ = new Vector3(camForward.x, 0, camForward.z).normalized;
 
-            float upWeight = Mathf.Lerp(0.15f, 0.45f, (_power / GameManager.Instance.powerUpperBound));
+            float upWeight = Mathf.Lerp(0.15f, 0.45f, (_power / GameManager.Instance.PowerUpperBound));
 
             finalDirection = (forwardXZ + Vector3.up * upWeight).normalized;
         }
