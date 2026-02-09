@@ -56,6 +56,11 @@ public class Seed : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
+        GameObject colobj = collision.gameObject;
+        if (colobj.CompareTag("Ground"))
+        {
+            GameManager.Instance.LoseLife();
+        }
         if (isActiveSeed && isFirstTouch)
         {
             Debug.Log("First Touch: ProceedNext");
@@ -63,8 +68,6 @@ public class Seed : MonoBehaviour
             isFirstTouch = false;
             isActiveSeed = false;
         }
-
-        GameObject colobj = collision.gameObject;
 
         if (colobj.CompareTag("Seed"))
         {

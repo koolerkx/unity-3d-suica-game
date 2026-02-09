@@ -8,9 +8,16 @@ public class GameManager : MonoBehaviour
 
     public float spawnDelay = 1f;
 
+    public int maxLife = 5;
+    public int currentLife = 5;
+
+    public double accumulatedTime = 0;
+
     [SerializeField] private Seed[] seedPrefab;
     [SerializeField] private Transform seedPosition;
     [SerializeField] private TMP_Text textScore;
+    [SerializeField] private TMP_Text timerText;
+    [SerializeField] private TMP_Text lifeText;
 
     private int totalScore;
     public void AddScore(int score) => SetScoreText(totalScore += score);
@@ -41,6 +48,8 @@ public class GameManager : MonoBehaviour
     public void Start()
     {
         CreateSeed();
+        SetLifeText(currentLife);
+        SetTimerText(accumulatedTime);
     }
 
     private void HandleInput()
@@ -81,6 +90,8 @@ public class GameManager : MonoBehaviour
 
     public void Update()
     {
+        accumulatedTime += Time.deltaTime;
+        SetTimerText(accumulatedTime);
         HandleInput();
     }
 
@@ -156,5 +167,26 @@ public class GameManager : MonoBehaviour
     private void SetScoreText(int score)
     {
         textScore.text = $"SCORE\n{score:D4}";
+    }
+
+    public void LoseLife()
+    {
+        if (currentLife <= 0) return;
+        currentLife--;
+        SetLifeText(currentLife);
+    }
+
+    private void SetLifeText(int life)
+    {
+        if (lifeText == null) return;
+        lifeText.text = $"LIFE\n{life:D1}/{maxLife:D1}";
+    }
+
+    private void SetTimerText(double totalSeconds)
+    {
+        if (timerText == null) return;
+        int minutes = Mathf.FloorToInt((float)(totalSeconds / 60.0));
+        int seconds = Mathf.FloorToInt((float)(totalSeconds % 60.0));
+        timerText.text = $"TIME\n{minutes:00}:{seconds:00}";
     }
 }
